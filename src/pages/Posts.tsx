@@ -63,13 +63,14 @@ const Posts: React.FC = () => {
 
     const sorted = sortBy
       ? [...filtered].sort((a, b) => {
-          if (sortBy === "category" || sortBy === "status") {
-            return (a[sortBy] as string).localeCompare(b[sortBy] as string);
-          } else if (
-            sortBy === "id" ||
+          if (
+            sortBy === "category" ||
+            sortBy === "status" ||
             sortBy === "title" ||
             sortBy === "content"
           ) {
+            return (a[sortBy] as string).localeCompare(b[sortBy] as string);
+          } else if (sortBy === "id") {
             return String(a[sortBy]).localeCompare(String(b[sortBy]));
           } else {
             return 0;
@@ -151,7 +152,7 @@ const Posts: React.FC = () => {
           onChange={handleSortChange}
         >
           <option value="">Sort by</option>
-          <option value="id">ID</option>
+          <option value="id">Id</option>
           <option value="title">Title</option>
           <option value="category">Category</option>
           <option value="content">Content</option>
@@ -167,7 +168,8 @@ const Posts: React.FC = () => {
           </svg>
         </div>
       </div>
-    
+      
+      <br/>
      <button onClick={createPost}>
            Create new Post
      </button>
@@ -185,7 +187,7 @@ const Posts: React.FC = () => {
             <p className="mt-2 mb-2">Post Category: {post.category}</p>
             <p className="mb-2">Post Status: {post.status}</p>
             <img src={post.image} className="w-30 h-20 mt-5 mb-5" alt="img"/>
-            <img src={post.thumbnail} className="w-30 h-30" alt="img"/>
+            <img src={post.thumbnail} className="w-30 h-30 mb-5 mt-5" alt="img"/>
           
 
             <Link
