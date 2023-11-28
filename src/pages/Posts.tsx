@@ -170,9 +170,9 @@ const Posts: React.FC = () => {
       </div>
       
       <br/>
-     <button onClick={createPost}>
+     {/* <button onClick={createPost}>
            Create new Post
-     </button>
+     </button> */}
     
       <ul>
         {currentPosts.map((post) => (
@@ -190,12 +190,12 @@ const Posts: React.FC = () => {
             <img src={post.thumbnail} className="w-30 h-30 mb-5 mt-5" alt="img"/>
           
 
-            <Link
+            {/* <Link
               className="bg-blue-500 text-white px-2 py-1 rounded mr-2"
               to={`/edit/${post.id}`}
             >
               Edit
-            </Link>
+            </Link> */}
 
             <button
               onClick={() => deletePost(post.id)}
