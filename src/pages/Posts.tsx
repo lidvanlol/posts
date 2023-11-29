@@ -1,151 +1,94 @@
-import React, { useState, useEffect, ChangeEvent } from "react";
-import { Link,useNavigate } from "react-router-dom";
-
-
-interface Post {
-  id: number;
-  title: string;
-  body: string;
-  category: string;
-  status: string;
-  content: string;
-  image: string;
-  thumbnail: string;
-}
-
+import React, { useContext, useState, ChangeEvent } from "react";
+import { Link } from "react-router-dom";
+import { PostContext } from "../context/PostContext";
 
 const Posts: React.FC = () => {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
+  const { posts, loading, error,setPosts } = useContext(PostContext);
+  const [search, setSearch] = useState<string>("");
+  const [sort, setSort] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [postsPerPage] = useState<number>(10);
-  const [filter, setFilter] = useState<string>("");
-  const [sortBy, setSortBy] = useState<string>("");
 
+  const handleSortChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    setSort(e.target.value);
+  };
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
-  const navigate = useNavigate();
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const response = await fetch("https://jsonplaceholder.org/posts");
-        if (!response.ok) {
-          throw new Error("Post not found");
-        }
-        const data: Post[] = await response.json();
-        setPosts(data);
-        setFilteredPosts(data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
+  if (error) {
+    return <div>{error}</div>;
+  }
 
-   
+   const deletePost = async (id: number) => {
+     try {
+       await fetch(`https://jsonplaceholder.org/posts/${id}`, {
+         method: "DELETE",
+       });
+       if(setPosts !== undefined){
+        setPosts((prevPosts: any) =>
+          prevPosts.filter((post: any) => post.id !== id)
+        );
+       }
+     } catch (error) {
+       console.error("Failed to delete post:", error);
+     }
+   };
 
-   
-    fetchPosts();
- 
-  }, []);
-
-  // console.log(posts);
-  // console.log(comments);
-  // console.log(users);
-
-  useEffect(() => {
-    // Apply filter
-    const filtered = posts.filter(
+  // Filter posts
+  const filteredPosts =
+    posts &&
+    posts.filter(
       (post) =>
-        post.title.toLowerCase().includes(filter.toLowerCase()) ||
-        post.content.toLowerCase().includes(filter.toLowerCase()) ||
-        post.category.toLowerCase().includes(filter.toLowerCase()) ||
-        post.status.toLowerCase().includes(filter.toLowerCase())
+        post.title.toLowerCase().includes(search.toLowerCase()) ||
+        post.content.toLowerCase().includes(search.toLowerCase())
     );
 
-    const sorted = sortBy
-      ? [...filtered].sort((a, b) => {
-          if (
-            sortBy === "category" ||
-            sortBy === "status" ||
-            sortBy === "title" ||
-            sortBy === "content"
-          ) {
-            return (a[sortBy] as string).localeCompare(b[sortBy] as string);
-          } else if (sortBy === "id") {
-            return String(a[sortBy]).localeCompare(String(b[sortBy]));
-          } else {
-            return 0;
-          }
-        })
-      : filtered;
+  // Sort posts
+  const sortedPosts =
+    filteredPosts &&
+    filteredPosts.sort((a: any, b: any) => {
+      if (sort === "title") {
+        return a.title.localeCompare(b.title);
+      } else if (sort === "content") {
+        return a.content.localeCompare(b.content);
+      } else if (sort === "status") {
+        return a.status.localeCompare(b.status);
+      } else if (sort === "category") {
+        return a.category.localeCompare(b.category);
+      } else {
+        return a.id - b.id;
+      }
+    });
 
-    setFilteredPosts(sorted);
-  }, [posts, filter, sortBy]);
 
-  // Calculate current posts to display based on pagination
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
-
-  // Change page
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
-
-  // Handle input change for filtering
-  const handleFilterChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setFilter(e.target.value);
-  };
-
-  // Handle sorting change
-  const handleSortChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    setSortBy(e.target.value);
-  };
-
-  const createPost = () => {
-     
-    navigate('/create')
-   
-  };
-
- 
-
-  const deletePost = (postId: number) => {
-    const updatedPosts = posts.filter((post) => post.id !== postId);
-    setPosts(updatedPosts);
-    setFilteredPosts(updatedPosts);
-  };
-
+  const currentPosts =
+    sortedPosts && sortedPosts.slice(indexOfFirstPost, indexOfLastPost);
 
   const goToFirstPage = () => setCurrentPage(1);
 
-  // Go to the last page
-  const goToLastPage = () =>
-    setCurrentPage(Math.ceil(filteredPosts.length / postsPerPage));
 
+  const goToLastPage = () => {
+    if (sortedPosts !== undefined) {
+      setCurrentPage(Math.ceil(sortedPosts.length / postsPerPage));
+    }
+  };
+
+
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   return (
-    <div className="relative isolate overflow-hidden bg-white  px-6 py-24 sm:py-32 lg:overflow-visible lg:px-0  mr-10 ml-10 ">
-      <h2 className="text-2xl font-bold mb-4 text-center">Posts</h2>
-
-      {/* Filtering */}
-
-      <div className="mb-4  ">
-        <input
-          className="shadow appearance-none border rounded w-full  py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline 	 "
-          id="search"
-          type="text"
-          placeholder="Search by title or content"
-          value={filter}
-          onChange={handleFilterChange}
-        />
-      </div>
-
-      {/* <input
+    <div className="relative isolate overflow-hidden bg-white  px-6 py-24 sm:py-32 lg:overflow-visible lg:px-0  mr-10 ml-10">
+      <input
         type="text"
-        placeholder="Filter by title"
-        value={filter}
-        onChange={handleFilterChange}
-        className="border p-2 mb-4"
-      /> */}
-
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search..."
+        className="shadow appearance-none border rounded w-full  py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-5"
+      />
       <div className="inline-block relative w-64 mb-5">
         <select
           className="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline"
@@ -170,13 +113,20 @@ const Posts: React.FC = () => {
       </div>
       
       <br/>
-     {/* <button onClick={createPost}>
-           Create new Post
-     </button> */}
-    
-      <ul>
-        {currentPosts.map((post) => (
-          <li key={post.id} className="mb-5 mt-5 border-solid border-2 p-5">
+
+      <Link
+        to={`/create`}
+        className="text-blue-500 hover:underline pb-2 visited:text-purple-600"
+      >
+       Create New Post
+      </Link>
+
+      {currentPosts &&
+        currentPosts.map((post: any) => (
+          <div
+            key={post.id}
+            className="p-4 border-b border-gray-200 mb-5 mt-5 border-solid border-2 p-5"
+          >
             <Link
               to={`/post/${post.id}`}
               className="text-blue-500 hover:underline pb-2 visited:text-purple-600"
@@ -184,18 +134,22 @@ const Posts: React.FC = () => {
               {post.title}
             </Link>
             <h4>{post.content}</h4>
+            <h5>{post.id}</h5>
             <p className="mt-2 mb-2">Post Category: {post.category}</p>
             <p className="mb-2">Post Status: {post.status}</p>
-            <img src={post.image} className="w-30 h-20 mt-5 mb-5" alt="img"/>
-            <img src={post.thumbnail} className="w-30 h-30 mb-5 mt-5" alt="img"/>
-          
+            <img src={post.image} className="w-30 h-20 mt-5 mb-5" alt="img" />
+            <img
+              src={post.thumbnail}
+              className="w-30 h-30 mb-5 mt-5"
+              alt="img"
+            />
 
-            {/* <Link
+            <Link
               className="bg-blue-500 text-white px-2 py-1 rounded mr-2"
               to={`/edit/${post.id}`}
             >
               Edit
-            </Link> */}
+            </Link>
 
             <button
               onClick={() => deletePost(post.id)}
@@ -203,49 +157,48 @@ const Posts: React.FC = () => {
             >
               Delete
             </button>
-          </li>
+          </div>
         ))}
-      </ul>
 
-      {/* Pagination */}
       <div className="flex">
-        <div className="flex justify-between mt-4">
-          <button
-            onClick={goToFirstPage}
-            className="relative block rounded bg-transparent px-3 py-1.5 text-sm text-neutral-500 transition-all duration-300 dark:text-neutral-400 "
-            disabled={currentPage === 1}
-          >
-            First
-          </button>
+        <button
+          onClick={goToFirstPage}
+          className="relative block rounded bg-transparent px-3 py-1.5 text-sm text-neutral-500 transition-all duration-300 dark:text-neutral-400 "
+          disabled={currentPage === 1}
+        >
+          First
+        </button>
 
-          {Array.from(
-            { length: Math.ceil(filteredPosts.length / postsPerPage) },
-            (_, index) => (
+        {sortedPosts &&
+          Array.from(
+            { length: Math.ceil(sortedPosts.length / postsPerPage) },
+            (_, number) => (
               <button
-                key={index + 1}
-                onClick={() => paginate(index + 1)}
+                key={number + 1}
+                onClick={() => paginate(number + 1)}
                 className={`relative block rounded bg-transparent px-3 py-1.5 text-sm text-neutral-600 transition-all duration-300 hover:bg-neutral-100   dark:hover:bg-neutral-700  ${
-                  currentPage === index + 1 ? "bg-blue-500 " : "bg-gray-200"
+                  currentPage === number + 1 ? "bg-gray-500 " : "bg-gray-200"
                 }`}
               >
-                {index + 1}
+                {number + 1}
               </button>
             )
           )}
 
-          <button
-            onClick={goToLastPage}
-            className="relative block rounded bg-transparent px-3 py-1.5 text-sm text-neutral-600 transition-all duration-300 hover:bg-neutral-100 dark:text-white dark:hover:bg-neutral-700 dark:hover:text-white"
-            disabled={
-              currentPage === Math.ceil(filteredPosts.length / postsPerPage)
-            }
-          >
-            Last
-          </button>
-        </div>
+        <button
+          onClick={goToLastPage}
+          className="relative block rounded bg-transparent px-3 py-1.5 text-sm text-neutral-600 transition-all duration-300 hover:bg-neutral-100 dark:text-white dark:hover:bg-neutral-700 dark:hover:text-white"
+          disabled={
+            sortedPosts &&
+            currentPage === Math.ceil(sortedPosts.length / postsPerPage)
+          }
+        >
+          Last
+        </button>
       </div>
     </div>
   );
 };
 
 export default Posts;
+

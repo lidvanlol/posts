@@ -65,7 +65,7 @@ const PostDetails: React.FC = () => {
       const fetchUsers = async () => {
         try {
           const response = await fetch(
-            "https://jsonplaceholder.typicode.com/users"
+            "https://jsonplaceholder.org/users"
           );
           if (!response.ok) {
             throw new Error("Comment not found");
@@ -96,14 +96,16 @@ const PostDetails: React.FC = () => {
 
 
   return (
-    <div>
+    <div className="relative isolate overflow-hidden bg-white  px-6 py-24 sm:py-32 lg:overflow-visible lg:px-0  mr-10 ml-10 content-center">
       {post ? (
         <div>
-          <h2>{post.title}</h2>
-          <p>{post.body}</p>
-          <p>Category: {post.category}</p>
-          <p>Status: {post.status}</p>
-          <p className="text-gray-500">by {getUserInfo(post.id)?.name}</p>
+          <h2 className="mt-2 mb-5 text-center">{post.title}</h2>
+          <p className="mt-2 mb-2">{post.content}</p>
+          <p className="mt-2 mb-2">Category: {post.category}</p>
+          <p className="mt-2 mb-2">Status: {post.status}</p>
+          <p className="text-gray-500 mt-2 mb-2">
+            by {getUserInfo(post.id)?.name}
+          </p>
           <div className="mt-5 mb-5">
             <h4 className="text-sm font-bold">Comments:</h4>
             <ul>
